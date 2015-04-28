@@ -273,8 +273,8 @@ public abstract class AbstractIntegrationTest {
 		Assert.notNull(data, "data must not be null");
 
 		if (xdEnvironment.isOnEc2()) {
-			StreamUtils.createDataFileOnRemote(xdEnvironment.getPrivateKey(), host, sourceDir, fileName, data,
-					WAIT_TIME);
+			Assert.isTrue(StreamUtils.createDataFileOnRemote(xdEnvironment.getPrivateKey(), host, sourceDir, fileName, data,
+					WAIT_TIME), "Could not create " + sourceDir + "/" + fileName + " on host " + host);
 		}
 		else {
 			try {
