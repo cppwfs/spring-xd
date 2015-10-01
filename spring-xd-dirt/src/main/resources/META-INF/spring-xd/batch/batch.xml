@@ -11,6 +11,10 @@
 		class="org.springframework.xd.dirt.plugins.job.DistributedJobLocator">
 		<property name="jdbcTemplate" ref="jdbcTemplate" />
 	</bean>
+
+	<bean id="composedBatchConfigurer"
+		  class="org.springframework.xd.dirt.plugins.job.ComposedBatchConfigurer">
+	</bean>
 	
 	<beans profile="admin">
 		<import resource="classpath:/org/springframework/xd/batch/hsql-datasource.xml" />

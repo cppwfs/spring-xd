@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.xd.dirt.job.BatchJobAlreadyExistsException;
 import org.springframework.xd.dirt.plugins.job.DistributedJobLocator;
+import org.springframework.xd.dirt.plugins.job.ComposedBatchConfigurer;
 import org.springframework.xd.dirt.server.admin.deployment.DeploymentUnitType;
 import org.springframework.xd.dirt.stream.Job;
 import org.springframework.xd.dirt.stream.JobDefinition;
@@ -63,6 +64,10 @@ public class JobsController extends
 		super(jobDeployer, new JobDefinitionResourceAssembler(), DeploymentUnitType.Job);
 	}
 
+	@Autowired
+	private ComposedBatchConfigurer composedBatchConfigurer;
+
+
 	@Override
 	@RequestMapping(value = "/definitions", method = RequestMethod.POST)
 	@ResponseStatus(HttpStatus.CREATED)
@@ -72,9 +77,25 @@ public class JobsController extends
 		if (distributedJobLocator.getJobNames().contains(name)) {
 			throw new BatchJobAlreadyExistsException(name);
 		}
+		if(ComposedBatchConfigurer.isComposedJobDefinition(definition)){
+			composedBatchConfigurer.createComposedJobModule(name, definition);
+		}
 		super.save(name, definition, deploy);
 	}
 
+
+	/**
+	 * Request removal of an existing resource definition (stream or job).
+	 *
+	 * @param name the name of an existing definition (required)
+	 */
+	@RequestMapping(value = "/definitions/{name}", method = RequestMethod.DELETE)
+	@ResponseStatus(HttpStatus.OK)
+	public void delete(@PathVariable("name") String name) throws Exception {
+		super.delete(name);
+		composedBatchConfigurer.destroyComposedJobModule(name);
+	}
+	
 	/**
 	 * List job definitions.
 	 */

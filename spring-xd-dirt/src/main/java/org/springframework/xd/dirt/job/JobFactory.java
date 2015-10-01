@@ -22,6 +22,7 @@ import java.util.Map;
 import org.springframework.util.Assert;
 import org.springframework.xd.dirt.core.Job;
 import org.springframework.xd.dirt.module.ModuleRegistry;
+import org.springframework.xd.dirt.plugins.job.ComposedBatchConfigurer;
 import org.springframework.xd.dirt.stream.JobDefinitionRepository;
 import org.springframework.xd.dirt.stream.ParsingContext;
 import org.springframework.xd.dirt.stream.XDStreamParser;
@@ -80,7 +81,9 @@ public class JobFactory {
 
 		String definition = properties.get("definition");
 		Assert.hasText(definition, "Job properties requires a 'definition' property");
-
+		if (ComposedBatchConfigurer.isComposedJobDefinition(definition)){
+			definition=name+"_COMPOSED";
+		}
 		List<ModuleDescriptor> descriptors = parser.parse(name, definition, ParsingContext.job);
 		Assert.isTrue(descriptors.size() == 1);
 		return new Job.Builder()
