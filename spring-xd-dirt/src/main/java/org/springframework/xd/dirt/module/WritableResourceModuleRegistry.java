@@ -25,6 +25,7 @@ import java.util.Properties;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.WritableResource;
@@ -84,8 +85,26 @@ public class WritableResourceModuleRegistry extends ResourceModuleRegistry imple
 		}
 
 	}
-
 	@Override
+	public boolean deleteBatchXml(ModuleDefinition definition) {
+		try {
+			String path = String.format("%s/%s/%s/", this.root, definition.getType().name(), definition.getName());
+			Resource[] resources = this.resolver.getResources(path);
+			WritableResource archive = (WritableResource) new FileSystemResource(resources[0].getFile().getCanonicalFile());
+			if (archive instanceof WritableResource) {
+				WritableResource writableResource = (WritableResource) archive;
+				return ExtendedResource.wrap(writableResource).delete();
+			}
+			else {
+				return false;
+			}
+		}
+		catch (IOException e) {
+			throw new RuntimeIOException("Exception while trying to delete module " + definition, e);
+		}
+
+	}
+	
 	public boolean registerNew(ModuleDefinition definition) {
 		if (!(definition instanceof UploadedModuleDefinition)) {
 			return false;
@@ -114,7 +133,48 @@ public class WritableResourceModuleRegistry extends ResourceModuleRegistry imple
 			throw new RuntimeException("Error trying to save " + uploadedModuleDefinition, e);
 		}
 	}
+	public boolean registerNewBatchXml(ModuleDefinition definition) {
+		if (!(definition instanceof UploadedModuleDefinition)) {
+			return false;
+		}
+		UploadedModuleDefinition uploadedModuleDefinition = (UploadedModuleDefinition) definition;
+		try {
+			createDirectory(definition);
+			Resource archive = getResourcesForComposedJob(definition.getType().name(), definition.getName(), XML_AS_FILE_EXTENSION).iterator().next();
 
+			if (archive instanceof WritableResource) {
+				WritableResource writableResource = (WritableResource) archive;
+				Assert.isTrue(!writableResource.exists(), "Could not install " + uploadedModuleDefinition + " at location " + writableResource + " as that file already exists");
+
+				MessageDigest md = MessageDigest.getInstance("MD5");
+				DigestInputStream dis = new DigestInputStream(uploadedModuleDefinition.getInputStream(), md);
+				FileCopyUtils.copy(dis, writableResource.getOutputStream());
+				WritableResource hashResource = (WritableResource) hashResource(writableResource);
+				// Write hash last
+				FileCopyUtils.copy(bytesToHex(md.digest()), hashResource.getOutputStream());
+
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		catch (IOException | NoSuchAlgorithmException e) {
+			throw new RuntimeException("Error trying to save " + uploadedModuleDefinition, e);
+		}
+	}
+
+	private void createDirectory(ModuleDefinition definition ){
+		try {
+			String path = String.format("%s/%s/%s/config/", this.root, definition.getType().name(), definition.getName());
+			Resource[] resources = this.resolver.getResources(path);
+			WritableResource directoryResource = new FileSystemResource(resources[0].getFile().getCanonicalFile());
+			ExtendedResource.wrap(directoryResource).mkdirs();
+		} catch (IOException ioe) {
+			throw new RuntimeException("Error trying to create directory for batch xml " + definition, ioe);
+		}
+	}
+	
 	public void setEnvironment(Environment environment) {
 		this.environment = (ConfigurableEnvironment) environment;
 	}

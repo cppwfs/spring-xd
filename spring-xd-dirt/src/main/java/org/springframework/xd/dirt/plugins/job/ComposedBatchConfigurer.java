@@ -18,18 +18,11 @@
 
 package org.springframework.xd.dirt.plugins.job;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.util.FileCopyUtils;
-import org.springframework.util.FileSystemUtils;
-import org.springframework.xd.dirt.module.ModuleAlreadyExistsException;
+import org.springframework.xd.dirt.module.support.ModuleDefinitionService;
 import org.springframework.xd.module.ModuleType;
 
 /**
@@ -40,13 +33,7 @@ public class ComposedBatchConfigurer {
 	
 	public static final String MODULE_SUFFIX = "_COMPOSED";
 	
-	public ComposedBatchConfigurer(){
-
-	}
-	@Value("${xd.module.home}")
-	private String moduleHome;
-	
-	private String convertDefinitionToXML(String definition){
+	private static String convertDefinitionToXML(String definition){
 		return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 				+ "<beans xmlns=\"http://www.springframework.org/schema/beans\" \n"
 				+ "xmlns:batch=\"http://www.springframework.org/schema/batch\" xmlns:aop=\"http://www.springframework.org/schema/aop\"\n"
@@ -94,52 +81,13 @@ public class ComposedBatchConfigurer {
 				+ "</beans>\n";
 	}
 
-	public void createComposedJobModule(String jobName, String definition) {
+	public static void createComposedJobModule(String jobName, String definition, ModuleDefinitionService moduleDefinitionService) {
 		String xmlDefinition = convertDefinitionToXML(definition);
-		FileCopyUtils fileCopyUtils;
 		String moduleName = getComposedJobModuleName(jobName);
-		URL moduleDirUrl = null;
-		
-		try{
-			moduleDirUrl = new URL(moduleHome + "/job/"+moduleName+"/config/");
-		}catch (IOException ioe){
-			throw new IllegalStateException(ioe.getMessage(), ioe);
-		}
-		
-		String moduleDir = moduleDirUrl.getPath();
-		File file = new File(moduleDir);
-		// Do not create a module that already exists
-		if (file.exists()) {
-			throw new ModuleAlreadyExistsException(moduleName, ModuleType.job);
-		}
-		if (!file.mkdirs())
-		{
-			throw new IllegalStateException("Failed to create directory for module "
-					 + moduleName);
-		}
-		file = new File(moduleDir +moduleName+".xml");
-		
-		try{
-			FileCopyUtils.copy(xmlDefinition.getBytes(),file);
-		}catch (IOException ioe){
-			throw new IllegalStateException(ioe.getMessage(), ioe);
-		}
+		moduleDefinitionService.upload(moduleName, ModuleType.job, xmlDefinition.getBytes(),false);
 	}
 
-	public void destroyComposedJobModule(String jobName)  {
-		URL moduleDirUrl = null;
-		String moduleName = getComposedJobModuleName(jobName);
-		try {
-			moduleDirUrl = new URL(moduleHome + "/job/"+moduleName);
-		} catch (MalformedURLException e) {
-			throw new IllegalStateException(e.getMessage(), e);
-		}
-		String moduleDir = moduleDirUrl.getPath();
-		File file = new File(moduleDir);
-		FileSystemUtils.deleteRecursively(file);
-	}
-	
-	public String getComposedJobModuleName(String jobName){
+	public static String getComposedJobModuleName(String jobName){
 		return jobName + MODULE_SUFFIX;
 	}
 	public static boolean isComposedJobDefinition(String definition){

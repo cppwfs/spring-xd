@@ -101,10 +101,14 @@ public class ModuleDefinitionService {
 	}
 
 	public ModuleDefinition upload(String name, ModuleType type, byte[] bytes, boolean force) {
+		return upload(name, type, bytes, force, false);
+	}
+	
+	public ModuleDefinition upload(String name, ModuleType type, byte[] bytes, boolean force, boolean isBatchJob) {
 		assertModuleUpdatability(name, type, force);
 
 		ModuleDefinition definition = new UploadedModuleDefinition(name, type, bytes);
-		Assert.isTrue(this.registry.registerNew(definition), definition + " could not be saved");
+		Assert.isTrue(this.registry.registerNewBatchXml(definition), definition + " could not be saved");
 		return definition;
 	}
 
@@ -141,8 +145,11 @@ public class ModuleDefinitionService {
 			}
 		}
 	}
-
-	public void delete(String name, ModuleType type) {
+	public void delete(String name, ModuleType type){
+		delete(name, type, false);
+	}
+	
+	public void delete(String name, ModuleType type, boolean isBatchJob) {
 		ModuleDefinition definition = registry.findDefinition(name, type);
 		if (definition == null) {
 			throw new NoSuchModuleException(name, type);
@@ -153,7 +160,7 @@ public class ModuleDefinitionService {
 					dependents);
 		}
 
-		boolean result = this.registry.delete(definition);
+		boolean result = (isBatchJob)?this.registry.deleteBatchXml(definition):this.registry.delete(definition);
 		Assert.isTrue(result, String.format("Could not delete module '%s:%s'", type, name));
 	}
 

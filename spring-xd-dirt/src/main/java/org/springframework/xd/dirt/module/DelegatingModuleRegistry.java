@@ -126,11 +126,36 @@ public class DelegatingModuleRegistry implements WritableModuleRegistry {
 	}
 
 	@Override
+	public boolean deleteBatchXml(ModuleDefinition definition) {
+		for (ModuleRegistry delegate : delegates) {
+			if (delegate instanceof WritableModuleRegistry) {
+				WritableModuleRegistry writableModuleRegistry = (WritableModuleRegistry) delegate;
+				if (writableModuleRegistry.deleteBatchXml(definition)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	@Override
 	public boolean registerNew(ModuleDefinition definition) {
 		for (ModuleRegistry delegate : delegates) {
 			if (delegate instanceof WritableModuleRegistry) {
 				WritableModuleRegistry writableModuleRegistry = (WritableModuleRegistry) delegate;
 				if (writableModuleRegistry.registerNew(definition)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	@Override
+	public boolean registerNewBatchXml(ModuleDefinition definition) {
+		for (ModuleRegistry delegate : delegates) {
+			if (delegate instanceof WritableModuleRegistry) {
+				WritableModuleRegistry writableModuleRegistry = (WritableModuleRegistry) delegate;
+				if (writableModuleRegistry.registerNewBatchXml(definition)) {
 					return true;
 				}
 			}

@@ -145,7 +145,17 @@ public class SynchronizingModuleRegistry implements WritableModuleRegistry {
 	}
 
 	@Override
+	public boolean deleteBatchXml(ModuleDefinition definition) {
+		return remoteRegistry.deleteBatchXml(definition);
+	}
+	
+	@Override
 	public boolean registerNew(ModuleDefinition definition) {
 		return remoteRegistry.registerNew(definition);
+	}
+
+	@Override
+	public boolean registerNewBatchXml(ModuleDefinition definition) {
+		return remoteRegistry.registerNewBatchXml(definition);
 	}
 }

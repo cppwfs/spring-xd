@@ -46,6 +46,10 @@ public class ResourceModuleRegistry implements ModuleRegistry {
 	 * The extension the module 'File' must have if it's not in exploded dir format.
 	 */
 	public static final String ARCHIVE_AS_FILE_EXTENSION = ".jar";
+	/**
+	 * The file format for XML must have if it's not in exploded dir format.
+	 */
+	public static final String XML_AS_FILE_EXTENSION = ".xml";
 
 	/**
 	 * The extension to use for storing an uploaded module hash.
@@ -145,6 +149,14 @@ public class ResourceModuleRegistry implements ModuleRegistry {
 
 		return filtered;
 	}
+	protected Iterable<Resource> getResourcesForComposedJob(String moduleType,
+											  String moduleName, String suffix) throws IOException {
+		String path = String.format("%s/%s/%s/config/%s%s", this.root, moduleType, moduleName, moduleName, suffix);
+		Resource[] resources = this.resolver.getResources(path);
+		List<Resource> filtered = sanitize(resources);
+
+		return filtered;
+	}
 
 	private List<Resource> sanitize(Resource[] resources) throws IOException {
 		List<Resource> filtered = new ArrayList<>();
@@ -160,7 +172,8 @@ public class ResourceModuleRegistry implements ModuleRegistry {
 			if (!fileName.startsWith(".") &&
 					(!fileName.contains(".") ||
 							fileName.endsWith(ARCHIVE_AS_FILE_EXTENSION) ||
-							fileName.endsWith(HASH_EXTENSION))) {
+							fileName.endsWith(HASH_EXTENSION) ||
+							fileName.endsWith(XML_AS_FILE_EXTENSION))) {
 				filtered.add(resource);
 			}
 		}

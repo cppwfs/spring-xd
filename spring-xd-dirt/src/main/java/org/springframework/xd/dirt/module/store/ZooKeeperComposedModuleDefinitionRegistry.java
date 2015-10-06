@@ -108,6 +108,11 @@ public class ZooKeeperComposedModuleDefinitionRegistry implements WritableModule
 	}
 
 	@Override
+	public boolean deleteBatchXml(ModuleDefinition definition) {
+		return true;
+	}
+	
+	@Override
 	public boolean registerNew(ModuleDefinition definition) {
 		if (!definition.isComposed()) {
 			return false;
@@ -141,7 +146,10 @@ public class ZooKeeperComposedModuleDefinitionRegistry implements WritableModule
 		}
 		return true;
 	}
-
+	@Override
+	public boolean registerNewBatchXml(ModuleDefinition definition) {
+		return true;
+	}
 	@Override
 	public ModuleDefinition findDefinition(String name, ModuleType type) {
 		String path = Paths.build(Paths.MODULES, type.toString(), name);

@@ -35,9 +35,26 @@ public interface WritableModuleRegistry extends ModuleRegistry {
 	public boolean delete(ModuleDefinition definition);
 
 	/**
-	 * Attempt to register the given definition, if that registry can handle it.
+	 * Attempt to delete the given batch xml definition, if that registry is responsible for it.
+	 *
+	 * @return true if this registry was responsible for the definition and it was actually deleted
+	 */
+	public boolean deleteBatchXml(ModuleDefinition definition);
+
+		/**
+		 * Attempt to register the given definition, if that registry can handle it.
+		 * @param definition the Modules name, type and content
+		 *
+		 * @return true if this registry is able to register the new definition and actually did
+		 */
+	public boolean registerNew(ModuleDefinition definition);
+
+	/**
+	 * Attempt to register the given batch xml definition, if that registry can handle it.
+	 * @param definition the Modules name, type and content
 	 *
 	 * @return true if this registry is able to register the new definition and actually did
 	 */
-	public boolean registerNew(ModuleDefinition definition);
+	public boolean registerNewBatchXml(ModuleDefinition definition);
+
 }

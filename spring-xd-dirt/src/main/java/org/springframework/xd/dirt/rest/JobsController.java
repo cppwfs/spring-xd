@@ -34,12 +34,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.xd.dirt.job.BatchJobAlreadyExistsException;
+import org.springframework.xd.dirt.module.support.ModuleDefinitionService;
 import org.springframework.xd.dirt.plugins.job.DistributedJobLocator;
 import org.springframework.xd.dirt.plugins.job.ComposedBatchConfigurer;
 import org.springframework.xd.dirt.server.admin.deployment.DeploymentUnitType;
 import org.springframework.xd.dirt.stream.Job;
 import org.springframework.xd.dirt.stream.JobDefinition;
 import org.springframework.xd.dirt.stream.JobDeployer;
+import org.springframework.xd.module.ModuleType;
 import org.springframework.xd.rest.domain.JobDefinitionResource;
 
 /**
@@ -58,14 +60,15 @@ public class JobsController extends
 
 	@Autowired
 	private DistributedJobLocator distributedJobLocator;
+	
+	private ModuleDefinitionService moduleDefinitionService;
 
 	@Autowired
-	public JobsController(JobDeployer jobDeployer) {
+	public JobsController(JobDeployer jobDeployer, ModuleDefinitionService moduleDefinitionService) {
 		super(jobDeployer, new JobDefinitionResourceAssembler(), DeploymentUnitType.Job);
+		this.moduleDefinitionService = moduleDefinitionService;
 	}
 
-	@Autowired
-	private ComposedBatchConfigurer composedBatchConfigurer;
 
 
 	@Override
@@ -78,7 +81,7 @@ public class JobsController extends
 			throw new BatchJobAlreadyExistsException(name);
 		}
 		if(ComposedBatchConfigurer.isComposedJobDefinition(definition)){
-			composedBatchConfigurer.createComposedJobModule(name, definition);
+			ComposedBatchConfigurer.createComposedJobModule(name, definition, moduleDefinitionService);
 		}
 		super.save(name, definition, deploy);
 	}
@@ -93,7 +96,10 @@ public class JobsController extends
 	@ResponseStatus(HttpStatus.OK)
 	public void delete(@PathVariable("name") String name) throws Exception {
 		super.delete(name);
-		composedBatchConfigurer.destroyComposedJobModule(name);
+		if( moduleDefinitionService.findDefinition(
+				ComposedBatchConfigurer.getComposedJobModuleName(name), ModuleType.job) != null) {
+			moduleDefinitionService.delete(ComposedBatchConfigurer.getComposedJobModuleName(name), ModuleType.job, true);
+		}
 	}
 	
 	/**
